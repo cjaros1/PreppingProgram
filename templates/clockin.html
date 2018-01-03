@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+
+{% block content %}
+
+<h1>Login</h1>
+<form method="post">
+    <table>
+        <tr>
+            <td><label for="empID">Employee ID</label></td>
+            <td>
+                <input name="empID" type="text" value="{{ empID }}">
+                <span class="error">{{ error.empID_error }}</span>
+            </td>
+        </tr>
+        <tr>
+            <td><label for="password">Password</label></td>
+            <td>
+                <input name="password" type="password">
+                <span class="error">{{ error.password_error }}</span>
+            </td>
+        </tr>
+    </table>
+    <input type="submit">
+</form>
+<br>
+
+
+
+{% endblock %}
