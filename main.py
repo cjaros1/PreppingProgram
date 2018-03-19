@@ -18,9 +18,13 @@ class Task(db.Model):
         self.name = name
 
 
-@app.route("/")
+@app.route("/", methods=['POST', 'GET'])
 def index():
-    return "Hello World"
+    if request.method=='POST':
+        task=request.form['task']
+        tasks.append(task)
+
+    return render_template('clockin.html',title="Clock In", task=tasks)
 
 
 
