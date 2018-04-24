@@ -1,0 +1,32 @@
+Prepping Program notes and descriptions:
+
+User is an Employee
+Employees are categorized as General Manager, Manager, Trainer, Associate, or Baker
+All users clock in to log in
+When user clocks in, the clock in time is recorded
+When user clocks in their permissions are determined
+General Managers and Managers have managerial permissions, Trainers, Associates, and Bakers do not
+If user is a manager, they have permission to access to the manager menu
+The manager menu would normally have many functions that only the managers and general manager can access
+For this program the manager menu will mostly consist of adding to inventory and other database editing functions as needed by the Program
+If the user is not a manager, the program will assume that the employee is a prepper
+Before the prepper can initiate the prepping process, the program will tell the prepper which ingredients and prepped items have expired
+The prepper will remove any expired items and the program will update the database accordingly
+The prepper will then be able to initiate the prepping process
+The program will tell the prepper how many of each prepped item should still be available and will ask for a count from the prepper to confirm
+The program will then calculate how many of each item needs to be prepped for that day
+The program will then allow the prepper to select an item to begin prepping and the prepper will initiate the item prep sequence
+The program will list the ingredients needed for the prepped item and the amounts needed and (possibly) give a description of how the prepper should prep the Ingredients
+When the prepper starts prepping each item, the ingredients will be removed from the database as they are "used" and will be "used" in order of nearest expiration date
+The prepper will tell the program when the item is finished being prepped
+The program will then record the time finished to calculate expiration Date
+The program will then update the database to add the item in the inventory and record its appropriate location
+When the prepper has finished prepping all items the program will ask to confirm a count of all prepped items in inventory and confirm locations and expiration dates
+The program will then initiate the thaw cart sequence
+The thaw cart sequence will ask the prepper to confirm counts of all items thawing and inform user of expired items
+The program will then tell the user how many of each item needs to be pulled from the freezer to be thawed
+The prepper will pull the items from freezer and tell the program how many have been pulled
+The program will update the inventory accordingly and record the time to calculate the new expiration dates
+The prepper is now done prepping and can clock Out, the clock out time is recorded
+When new inventory arrives at the store, the managers or general manager will have a function in the manager menu to take inventory to confirm/update current items and add new items
+Managers can also adjust the amounts of prepped items that are needed for each day with another function in the manager menu
