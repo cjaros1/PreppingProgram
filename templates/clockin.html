@@ -10,14 +10,14 @@
             <td><label for="empID">Employee ID</label></td>
             <td>
                 <input name="empID" type="text" value="{{ empID }}">
-                <span class="error">{{ error }}</span>
+                <span class="error">{{ employee_error }}</span>
             </td>
         </tr>
         <tr>
             <td><label for="password">Password</label></td>
             <td>
                 <input name="password" type="password">
-                <span class="error">{{ error.password_error }}</span>
+                <span class="error">{{ password_error }}</span>
             </td>
         </tr>
     </table>

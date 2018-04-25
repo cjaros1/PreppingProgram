@@ -2,16 +2,20 @@
 
 <html>
     <head>
-        <title>Prepping Program</title>
-        <link rel="stylesheet" href="/css/normalize.css">
+        <title> Prepping Program: {{ title }}</title>
         <link rel="stylesheet" href="/css/styles.css">
+        <link rel="stylesheet" href="/css/normalize.css">
+
     </head>
     <body>
         <nav>
             <ul>
                 <li><a href="/clockin">Clock In</a></li>
                 <li><a href="/clockout">Clock Out</a></li>
+                {% if managerPerms %}
+                {% print("Manager Permissions are: "+managerPerms) %}
                 <li><a href="/manager">Manager</a></li>
+                {% endif %}
             </ul>
         </nav>
         {% block content %}
