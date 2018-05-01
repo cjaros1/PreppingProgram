@@ -2,19 +2,22 @@
 {% block content %}
 
 
-{{ table }}
+
 <table>
   <tr>
     <th>Ingredient Number</th>
     <th>Ingredient Name</th>
     <th>Ingredient Shelf Life</th>
-    <th>Checked</th>
+    <th>Select</th>
   </tr>
 
-{% foreach row in table %}
+{% for row in table %}
   <tr>
-    <td>{{ row }}
-  </tr>0
+    <td>{{ row[0] }}</td>
+    <td>{{ row[1] }}</td>
+    <td align="right">{{ row[2] }} Hours</td>
+    <td align="right"><input type="checkbox" name="ingSelect{{ row[0] }}"></td>
+  </tr>
 {% endfor %}
 </table>
 

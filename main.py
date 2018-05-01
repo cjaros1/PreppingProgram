@@ -128,37 +128,64 @@ def clockout():
 def manager():
     return render_template('manager.html',title='Manager', error="", clocked_in=clocked_in)
 
+@app.route("/inventory",methods=['POST','GET'])
+def inventory():
+    invs=(Inventory.query.all())
+    table=[]
+
+    location=""
+
+
+    for i in range(len(invs)):
+        row=[]
+
+        if invs[i].invLocation=="WIC":
+            location="Walk In Cooler"
+        elif invs[i].invLocation=="FRZ":
+            location="Freezer"
+        elif invs[i].invLocation=="SWB":
+            location="Sandwich Bar"
+        elif invs[i].invLocation=="SAB":
+            location="Salad Bar"
+        else:
+            location="Other"
+
+        emp=Employee.query.filter_by(empID=invs[i].invEmpID).first()
+        row.append(str(invs[i].invID))
+        row.append(str(invs[i].invName))
+        row.append(str(invs[i].invQOH))
+        row.append(location)
+        row.append(str(invs[i].invDateAdded))
+        row.append(str(invs[i].invExpDate))
+        row.append(str(emp.empLName)+", "+str(emp.empFName)[0])
+        table.append(row)
+
+
+    return render_template('inventory.html', title='Inventory', error='', table=table)
+
+
+
 @app.route("/ingredients",methods=['POST','GET'])
 def ingredients():
 
     ings=(Ingredients.query.all())
-
+    table=[]
     for i in range(len(ings)):
-        table_row="<tr>"
-        table_row+="<td>"+str(ings[i].ingID)+"</td>"
-        table_row+="<td>"+str(ings[i].ingName)+"</td>"
-        table_row+="<td align='right'>"+str(ings[i].ingShelfLife)+" hours</td>"
-        table_row+="<td align='right'><input type='checkbox' name=ingid"+str(ings[i].ingID)+"</td>"
-        table_row+="</tr>"
-        table+=table_row
+        row=[]
+        row.append(str(ings[i].ingID))
+        row.append(str(ings[i].ingName))
+        row.append(str(ings[i].ingShelfLife))
+        table.append(row)
 
 
-    return render_template("ingredients.html", title="Ingredients List", table=table, clocked_in=clocked_in)
+    return render_template("ingredients.html", title="Ingredients List", table=table)
 
 @app.route("/preps",methods=['POST','GET'])
 def preps():
-    page_header="<html><head><title> Prepping Program: Preps List</title><link rel= 'stylesheet' type= 'text/css' href= 'static/css/styles.css')'><link rel= 'stylesheet' type= 'text/css' href='static/css/normalize.css') ></head><body>"
-    page_footer="</body></html>"
+
     prepsList=(Preps.query.all())
-    table="<table border='4px'>"
-    table_row="<tr>"
-    table_row+="<th>Prep Number</th>"
-    table_row+="<th>Prep Name</th>"
-    table_row+="<th>Prep Ingredients</th>"
-    table_row+="<th>Prep Shelf Life</th>"
-    table_row+="<th>Checked</th>"
-    table_row+="</tr>"
-    table+=table_row
+    table=[]
+
     for i in range(len(prepsList)):
 
         prepIngs=Ingredients.query.get(prepsList[i].prepIngr1).ingName
@@ -170,16 +197,16 @@ def preps():
             prepIngs+=", "+Ingredients.query.get(prepsList[i].prepIngr4).ingName
         if prepsList[i].prepIngr5:
             prepIngs+=", "+Ingredients.query.get(prepsList[i].prepIngr5).ingName
-        table_row="<tr>"
-        table_row+="<td>"+str(prepsList[i].prepID)+"</td>"
-        table_row+="<td>"+str(prepsList[i].prepName)+"</td>"
-        table_row+="<td>"+prepIngs+"</td>"
-        table_row+="<td align='right'>"+str(prepsList[i].prepShelfLife)+" hours</td>"
-        table_row+="<td align='right'><input type='checkbox' name=prepid"+str(prepsList[i].prepID)+"</td>"
-        table_row+="</tr>"
-        table+=table_row
-    table+="</table>"
-    return page_header+table+page_footer
+
+        row=[]
+        row.append(str(prepsList[i].prepID))
+        row.append(str(prepsList[i].prepName))
+        row.append(prepIngs)
+        row.append(str(prepsList[i].prepShelfLife))
+        table.append(row)
+
+
+    return render_template("preps.html", title="Preps List", table=table)
 
 @app.route("/getemployee", methods=['POST'])
 def getemployee():

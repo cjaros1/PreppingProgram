@@ -5,8 +5,17 @@ body {
     padding: 10px;
 }
 
-span.error {
+.error {
     color: red;
+}
+
+.invTH {
+    width=1000px;
+}
+
+.invTD {
+    text-align: right;
+    width=400px;
 }
 
 label {
