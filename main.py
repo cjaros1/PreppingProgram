@@ -9,9 +9,7 @@ app.config['SQLALCHEMY_DATABASE_URI']='mysql+pymysql://prep-db:root@localhost:88
 app.config['SQLALCHEMY_ECHO'] = True
 db = SQLAlchemy(app)
 
-login = False
-employee_id=0
-managerPerms=False
+
 
 class Employee(db.Model):
 
@@ -57,6 +55,7 @@ class Inventory(db.Model):
     invDateAdded=db.Column(db.DateTime())
     invExpDate=db.Column(db.DateTime())
     invEmpID=db.Column(db.String(120), db.ForeignKey(Employee.empID))
+    invQOH=db.Column(db.Integer)
 
     def __init__(self,invID,invName,invIsPrepped,invLocation,invDateAdded,invExpDate,invEmpID):
         self.invID=invEmpID
@@ -66,6 +65,7 @@ class Inventory(db.Model):
         self.invDateAdded=invDateAdded
         self.invExpDate=invExpDate
         self.invEmpID=invEmpID
+        self.invQOH=invQOH
 
 class Preps(db.Model):
 
@@ -92,16 +92,20 @@ class Preps(db.Model):
 
 @app.route("/", methods=['POST', 'GET'])
 def index():
-    return render_template('clockin.html',title='Clock In', error = "")
+    return render_template('clockin.html',title='Clock In', error = "", clocked_in=clocked_in)
 
 
 @app.route("/clockin", methods=['GET'])
 def clockin():
+    global clocked_in
+    clocked_in=False
     print("endget")
-    return render_template('clockin.html',title='Clock In', error="")
+    return render_template('clockin.html',title='Clock In', error="", clocked_in=clocked_in)
 
 @app.route("/clockin",methods=['POST'])
 def clockin_post():
+    global clocked_in
+    clocked_in=False
     print ("endpost")
     print(request.form)
     employee_id=request.form['empID']
@@ -111,24 +115,24 @@ def clockin_post():
 
 @app.route("/clockout", methods=['POST', 'GET'])
 def clockout():
-    return render_template('clockout.html', title='Clock Out', error="")
+
+    clockout_time=datetime.now()
+    time_worked=(clockout_time.hour*1.00+clockout_time.minute/60.00+clockout_time.second/3600.00)-(clockin_time.hour*1.00+clockin_time.minute/60.00+clockin_time.second/3600.00)
+    clockout_msg="{}: {} {} Clock In Time: {} Clock Out Time: {}".format(employee_pos, employee.empFName, employee.empLName, clockin_time.strftime('%H:%M:%S'), clockout_time.strftime('%H:%M:%S'))
+    hours_msg="Hours: {0:2f}".format(time_worked)
+    managerPerms=False
+    clocked_in=False
+    return render_template('clockout.html', title='Clock Out', error="", clockout_msg=clockout_msg, hours_msg=hours_msg, clocked_in=clocked_in)
 
 @app.route("/manager", methods=['POST', 'GET'])
 def manager():
-    return render_template('manager.html',title='Manager', error="")
+    return render_template('manager.html',title='Manager', error="", clocked_in=clocked_in)
 
 @app.route("/ingredients",methods=['POST','GET'])
 def ingredients():
 
     ings=(Ingredients.query.all())
-    table="<table>"
-    table_row="<tr>"
-    table_row+="<th>Ingredient Number</th>"
-    table_row+="<th>Ingredient Name</th>"
-    table_row+="<th>Ingredient Shelf Life</th>"
-    table_row+="<th>Checked</th>"
-    table_row+="</tr>"
-    table+=table_row
+
     for i in range(len(ings)):
         table_row="<tr>"
         table_row+="<td>"+str(ings[i].ingID)+"</td>"
@@ -137,13 +141,14 @@ def ingredients():
         table_row+="<td align='right'><input type='checkbox' name=ingid"+str(ings[i].ingID)+"</td>"
         table_row+="</tr>"
         table+=table_row
-    table+="</table>"
 
-    return render_template("ingredients.html", title="Ingredients List", table=table)
+
+    return render_template("ingredients.html", title="Ingredients List", table=table, clocked_in=clocked_in)
 
 @app.route("/preps",methods=['POST','GET'])
 def preps():
-
+    page_header="<html><head><title> Prepping Program: Preps List</title><link rel= 'stylesheet' type= 'text/css' href= 'static/css/styles.css')'><link rel= 'stylesheet' type= 'text/css' href='static/css/normalize.css') ></head><body>"
+    page_footer="</body></html>"
     prepsList=(Preps.query.all())
     table="<table border='4px'>"
     table_row="<tr>"
@@ -174,20 +179,31 @@ def preps():
         table_row+="</tr>"
         table+=table_row
     table+="</table>"
-    return table
+    return page_header+table+page_footer
 
 @app.route("/getemployee", methods=['POST'])
 def getemployee():
+    global managerPerms
+    global employee
+    global employee_pos
+    global clockin_time
+
+    #print(managerPerms)
     employee_id=request.form['empID']
     employee_password=request.form['password']
     employee=Employee.query.filter_by(empID=employee_id).first()
     employee_pos=""
+    managerPerms=False
+
+    print(managerPerms)
     if employee_id=="" or employee==None:
-        return render_template('clockin.html',title='Clock In', employee_error="Employee {} Not Found: Please make sure your employee ID you've entered is correct".format(employee_id))
+        clocked_in=False
+        return render_template('clockin.html',title='Clock In', employee_error="Employee {} Not Found: Please make sure your employee ID you've entered is correct".format(employee_id), clocked_in=clocked_in)
     elif employee_password=="" or int(employee_password) != employee.empPassword:
         print("form password: "+ employee_password)
         print("db password: "+str(employee.empPassword))
-        return render_template('clockin.html',title='Clock In', password_error="Password incorrect, please enter the valid password")
+        clocked_in=False
+        return render_template('clockin.html',title='Clock In', password_error="Password incorrect, please enter the valid password", clocked_in=clocked_in)
 
     if employee.empPosition=="M":
         employee_pos="Manager"
@@ -207,10 +223,12 @@ def getemployee():
 
     #employee.empFName="William"
     #db.session.commit()
+    clockin_time=datetime.now()
     welcome_msg="Welcome, {}: {} {}.".format(employee_pos, employee.empFName, employee.empLName)
-    clockin_msg="You have clocked in at {}".format(datetime.now().strftime('%H:%M:%S'))
+    clockin_msg="You have clocked in at {}".format(clockin_time.strftime('%H:%M:%S'))
+    clocked_in=True
     print("Successful Clock In with employee_id: {} and employee_password: {} at time: {} Manager Permissions are: {}".format(employee_id,employee_password,datetime.now().strftime('%H:%M:%S'),managerPerms))
-    return render_template('menu.html', title='Menu', error='', welcome_msg=welcome_msg, clockin_msg=clockin_msg)
+    return render_template('menu.html', title='Menu', error='', welcome_msg=welcome_msg, clockin_msg=clockin_msg, managerPerms=managerPerms, clocked_in=clocked_in)
 
 if __name__ == '__main__':
     app.run()

@@ -1,6 +1,22 @@
 {% extends 'base.html' %}
+{% block content %}
+
 
 {{ table }}
+<table>
+  <tr>
+    <th>Ingredient Number</th>
+    <th>Ingredient Name</th>
+    <th>Ingredient Shelf Life</th>
+    <th>Checked</th>
+  </tr>
 
-{% block content %}
+{% foreach row in table %}
+  <tr>
+    <td>{{ row }}
+  </tr>0
+{% endfor %}
+</table>
+
+
 {% endblock %}

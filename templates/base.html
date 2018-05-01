@@ -3,17 +3,21 @@
 <html>
     <head>
         <title> Prepping Program: {{ title }}</title>
-        <link rel="stylesheet" href="/css/styles.css">
-        <link rel="stylesheet" href="/css/normalize.css">
+
+        <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/styles.css') }}">
+        <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/normalize.css') }}">
 
     </head>
     <body>
         <nav>
             <ul>
+                {% if clocked_in==False %}
                 <li><a href="/clockin">Clock In</a></li>
+                {% endif %}
+                {% if clocked_in %}
                 <li><a href="/clockout">Clock Out</a></li>
+                {% endif %}
                 {% if managerPerms %}
-                {% print("Manager Permissions are: "+managerPerms) %}
                 <li><a href="/manager">Manager</a></li>
                 {% endif %}
             </ul>
