@@ -11,6 +11,7 @@ body {
 
 .expired {
     color: red;
+    bgcolor: red;
 }
 
 label {
