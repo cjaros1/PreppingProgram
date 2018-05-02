@@ -1,7 +1,7 @@
 
 from flask import Flask, request, redirect, render_template, session
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 
 app = Flask(__name__)
@@ -87,8 +87,8 @@ class Inventory(db.Model):
     invIngID=db.Column(db.Integer, db.ForeignKey(Ingredients.ingID))
     invQOH=db.Column(db.Integer)
 
-    def __init__(self,invID,invName,invIsPrepped,invLocation,invDateAdded,invExpDate,invEmpID):
-        self.invID=invEmpID
+    def __init__(self,invID,invName,invLocation,invDateAdded,invExpDate,invEmpID, invPrepID, invIngID, invQOH):
+        self.invID=invID
         self.invName=invName
         self.invLocation=invLocation
         self.invDateAdded=invDateAdded
@@ -142,6 +142,13 @@ def clockin_post():
 
     return "employeeid: {} password: {}".format(employee_id, employee_password)
 
+@app.route("/menu",methods=['POST','GET'])
+def menu():
+    clocked_in=session['clocked_in']
+    managerPerms=session['managerPerms']
+
+    return render_template('menu.html',title='Menu',error='',clocked_in=clocked_in,managerPerms=managerPerms)
+
 @app.route("/clockout", methods=['POST', 'GET'])
 def clockout():
     hoursID=Hours.query.count()+1
@@ -157,6 +164,8 @@ def clockout():
     clockout_msg="{}: {} {} Clock In Time: {} Clock Out Time: {}".format(session['employee_pos'], session['employee_First'], session['employee_Last'], clockin_time.strftime('%H:%M:%S'), clockout_time.strftime('%H:%M:%S'))
     hours_msg="Hours: {0:2f}".format(shiftHrs)
     clocked_in=False
+    managerPerms=False
+    session['managerPerms']=managerPerms
     session['clocked_in']=clocked_in
     db.session.add(hours)
     db.session.commit()
@@ -166,8 +175,8 @@ def clockout():
 def manager():
     return render_template('manager.html', title='Manager', error="", clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
 
-@app.route("/addinventory",methods=['POST','GET'])
-def addinventory():
+@app.route("/inventory",methods=['POST','GET'])
+def inventory():
     invs=(Inventory.query.all())
     table=[]
 
@@ -199,7 +208,60 @@ def addinventory():
         table.append(row)
 
 
-    return render_template('addinventory.html', title='Add To Inventory', error='', table=table, clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
+    return render_template('inventory.html', title='Inventory', error='', table=table, clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
+
+
+
+@app.route("/addinventory",methods=['POST','GET'])
+def addinventory():
+    ings=(Ingredients.query.all())
+    ingNames=[]
+    for i in range(len(ings)-1):
+        ingNames.append(ings[i].ingName)
+    session['ingNames']=ingNames
+    return render_template('addinventory.html', title='Add To Inventory', error='', ingNames=session['ingNames'], clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
+
+
+@app.route("/inventoryadded", methods=['POST'])
+def inventoryadded():
+
+    quantity=int(request.form['quantity'])
+    ingNum=request.form.get('ingNum')
+    ingLoc=request.form.get('location')
+    if ingLoc=="FRZ":
+        loc="freezer"
+    elif ingLoc=="WIC":
+        loc="walk in cooler"
+    elif ingLoc=="SAB":
+        loc="salad bar"
+    elif ingLoc=="SWB":
+        loc="sandwich bar"
+    else:
+        loc="other location"
+
+
+    ingredient=Ingredients.query.filter_by(ingID=ingNum).first()
+    dateAdded=datetime.now()
+    expiration= dateAdded + timedelta(hours=ingredient.ingShelfLife)
+    employee_ID=session['employee_ID']
+
+    if quantity < 0 :
+        error="Cannot add negative quantity to inventory, please select a positive number."
+        return render_template('addinventory.html', title='Add To Inventory', error='', ingNames=session['ingNames'],  clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
+    elif quantity==0:
+        error="You have added 0 {} to the inventory.".format(ingredient)
+        return render_template('addinventory.html', title='Add To Inventory', error='', ingNames=session['ingNames'],  clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
+
+    invID=Inventory.query.count()+1
+    print(invID)
+    inventory=Inventory(invID, ingredient.ingName, ingLoc, dateAdded, expiration, employee_ID, 19, ingredient.ingID, quantity)
+    db.session.add(inventory)
+    db.session.commit()
+
+    add_msg="You have added {} {} to the inventory in the {}".format(quantity, ingredient.ingName, loc)
+
+    return render_template('addinventory.html', title='Add To Inventory', error='', ingNames=session['ingNames'], add_msg=add_msg, clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
+
 
 @app.route("/delinventory",methods=['POST','GET'])
 def delinventory():
@@ -242,7 +304,7 @@ def ingredients():
 
     ings=(Ingredients.query.all())
     table=[]
-    for i in range(len(ings)):
+    for i in range(len(ings)-1):
         row=[]
         row.append(str(ings[i].ingID))
         row.append(str(ings[i].ingName))
@@ -258,7 +320,7 @@ def preps():
     prepsList=(Preps.query.all())
     table=[]
 
-    for i in range(len(prepsList)):
+    for i in range(len(prepsList)-1):
 
         prepIngs=Ingredients.query.get(prepsList[i].prepIngr1).ingName
         if prepsList[i].prepIngr2:

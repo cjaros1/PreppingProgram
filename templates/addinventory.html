@@ -1,33 +1,20 @@
 {% extends 'base.html' %}
 {% block content %}
 
-
-
-<table>
-  <tr>
-    <th class="invTH">Inventory Number</th>
-    <th class="invTH">Inventory Name</th>
-    <th class="invTH">Quantity On Hand</th>
-    <th class="invTH">Location In Inventory</th>
-    <th class="invTH">Date Added</th>
-    <th class="invTH">Expiration Date</th>
-    <th class="invTH">Employee</th>
-    <th class="invTH">Select</th>
-  </tr>
-
-{% for row in table %}
-  <tr>
-    <td class="invTD">{{ row[0] }}</td>
-    <td class="invTD">{{ row[1] }}</td>
-    <td class="invTD">{{ row[2] }}</td>
-    <td class="invTD">{{ row[3] }}</td>
-    <td class="invTD">{{ row[4] }}</td>
-    <td class="invTD">{{ row[5] }}</td>
-    <td class="invTD">{{ row[6] }}</td>
-    <td class="invTD"><input type="checkbox" name="invSelect{{ row[0] }}"></td>
-  </tr>
+{{ add_msg }}
+<form action='/inventoryadded' method='POST'>
+<select name='ingNum'>
+{% for i in range(ingNames|length) %}
+  <option value='{{ i+1 }}'>{{ i+1 }}. {{ ingNames[i] }}</option>
 {% endfor %}
-</table>
-
+</select>
+<select name='location'>
+  <option value='FRZ'>Freezer</option>
+  <option value='WIC'>Walk In Cooler</option>
+</select>
+<input type='number' name='quantity' min=0 value=0></input>
+<span class='error'>{{ error }}</error>
+<input type='submit'>
+</form>
 
 {% endblock %}
