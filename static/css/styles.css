@@ -10,8 +10,7 @@ body {
 }
 
 .expired {
-    color: red;
-    bgcolor: red;
+    background-color: red;
 }
 
 label {

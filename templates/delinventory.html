@@ -5,26 +5,26 @@
 
 <table>
   <tr>
-    <th class="invTH">Inventory Number</th>
-    <th class="invTH">Inventory Name</th>
-    <th class="invTH">Quantity On Hand</th>
-    <th class="invTH">Location In Inventory</th>
-    <th class="invTH">Date Added</th>
-    <th class="invTH">Expiration Date</th>
-    <th class="invTH">Employee</th>
-    <th class="invTH">Select</th>
+    <th>Inventory Number</th>
+    <th>Inventory Name</th>
+    <th>Quantity On Hand</th>
+    <th>Location In Inventory</th>
+    <th>Date Added</th>
+    <th>Expiration Date</th>
+    <th>Employee</th>
+    <th>Select</th>
   </tr>
 
 {% for row in table %}
   <tr>
-    <td class="invTD">{{ row[0] }}</td>
-    <td class="invTD">{{ row[1] }}</td>
-    <td class="invTD">{{ row[2] }}</td>
-    <td class="invTD">{{ row[3] }}</td>
-    <td class="invTD">{{ row[4] }}</td>
-    <td class="invTD">{{ row[5] }}</td>
-    <td class="invTD">{{ row[6] }}</td>
-    <td class="invTD"><input type="checkbox" name="invSelect{{ row[0] }}"></td>
+    <td>{{ row[0] }}</td>
+    <td>{{ row[1] }}</td>
+    <td>{{ row[2] }}</td>
+    <td>{{ row[3] }}</td>
+    <td>{{ row[4] }}</td>
+    <td>{{ row[5] }}</td>
+    <td>{{ row[6] }}</td>
+    <td><input type="checkbox" name="invSelect{{ row[0] }}"></td>
   </tr>
 {% endfor %}
 </table>

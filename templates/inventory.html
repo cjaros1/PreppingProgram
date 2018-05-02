@@ -16,11 +16,12 @@
   </tr>
 
 {% for row in table %}
-  <tr>
-    <td  {% if row[7] %}
-      class="expired"
-      {% endif %}
-       >{{ row[0] }}</td>
+  <tr
+    {% if row[7] %}
+    class="expired"
+    {% endif %}
+    >
+    <td >{{ row[0] }}</td>
     <td >{{ row[1] }}</td>
     <td >{{ row[2] }}</td>
     <td >{{ row[3] }}</td>
