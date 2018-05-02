@@ -9,13 +9,8 @@ body {
     color: red;
 }
 
-.invTH {
-    width=1000px;
-}
-
-.invTD {
-    text-align: right;
-    width=400px;
+.expired {
+    color: red;
 }
 
 label {

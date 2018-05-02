@@ -85,7 +85,7 @@ class Inventory(db.Model):
     invEmpID=db.Column(db.String(120), db.ForeignKey(Employee.empID))
     invPrepID=db.Column(db.Integer, db.ForeignKey(Preps.prepID))
     invIngID=db.Column(db.Integer, db.ForeignKey(Ingredients.ingID))
-    invQOH=db.Column(db.Integer)
+    invQOH=db.Column(db.Float)
 
     def __init__(self,invID,invName,invLocation,invDateAdded,invExpDate,invEmpID, invPrepID, invIngID, invQOH):
         self.invID=invID
@@ -146,8 +146,10 @@ def clockin_post():
 def menu():
     clocked_in=session['clocked_in']
     managerPerms=session['managerPerms']
-
-    return render_template('menu.html',title='Menu',error='',clocked_in=clocked_in,managerPerms=managerPerms)
+    employee_name=session['employee_First']+" "+session['employee_Last']
+    employee_pos=session['employee_pos']
+    header_msg=employee_pos+": "+employee_name
+    return render_template('menu.html',title='Menu',error='', welcome_msg=header_msg, clocked_in=clocked_in,managerPerms=managerPerms)
 
 @app.route("/clockout", methods=['POST', 'GET'])
 def clockout():
@@ -197,6 +199,10 @@ def inventory():
         else:
             location="Other"
 
+        isExpired=False
+        if invs[i].invExpDate<datetime.now():
+            isExpired=True
+
         emp=Employee.query.filter_by(empID=invs[i].invEmpID).first()
         row.append(str(invs[i].invID))
         row.append(str(invs[i].invName))
@@ -205,6 +211,7 @@ def inventory():
         row.append(str(invs[i].invDateAdded))
         row.append(str(invs[i].invExpDate))
         row.append(str(emp.empLName)+", "+str(emp.empFName)[0])
+        row.append(isExpired)
         table.append(row)
 
 

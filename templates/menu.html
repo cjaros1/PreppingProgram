@@ -3,10 +3,12 @@
 
 
 
-
+{% if clockin_msg!="" %}
 <h1>{{ welcome_msg }}</h1>
 <p>{{ clockin_msg }}</p>
-
+{% else %}
+<h1>{{ header_msg }}</h1>
+{% endif %}
 <ul>
   <li><a href="/ingredients">Ingredients List</a></li>
   <li><a href="/preps">Preps List</a></li>
