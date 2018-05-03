@@ -5,12 +5,32 @@ body {
     padding: 10px;
 }
 
+.base{
+    background-color: tan;
+}
+
+.logo{
+  float:right;
+}
+
 .error {
     color: red;
 }
 
 .expired {
     background-color: red;
+}
+
+.fresh{
+  background-color: green;
+}
+
+.today{
+  background-color: yellow;
+}
+
+.hr3{
+  background-color: orange;
 }
 
 label {

@@ -8,15 +8,13 @@
     <th>Ingredient Number</th>
     <th>Ingredient Name</th>
     <th>Ingredient Shelf Life</th>
-    <th>Select</th>
   </tr>
 
 {% for row in table %}
   <tr>
     <td>{{ row[0] }}</td>
     <td>{{ row[1] }}</td>
-    <td align="right">{{ row[2] }} Hours</td>
-    <td align="right"><input type="checkbox" name="ingSelect{{ row[0] }}"></td>
+    <td>{{ row[2] }} Hours</td>
   </tr>
 {% endfor %}
 </table>

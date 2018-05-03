@@ -7,7 +7,6 @@
     <th>Prep Name</th>
     <th>Prep Ingredients</th>
     <th>Prep Shelf Life</th>
-    <th>Select</th>
   </tr>
 
 {% for row in table %}
@@ -15,8 +14,7 @@
     <td>{{ row[0] }}</td>
     <td>{{ row[1] }}</td>
     <td>{{ row[2] }}</td>
-    <td align="right">{{ row[3] }} Hours</td>
-    <td align="right"><input type="checkbox" name="prepSelect{{ row[0] }}"></td>
+    <td>{{ row[3] }} Hours</td>
   </tr>
 {% endfor %}
 </table>

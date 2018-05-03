@@ -16,7 +16,17 @@
   </tr>
 
 {% for row in table %}
-  <tr>
+  <tr
+  {% if row[7]=="expired" %}
+  class="expired"
+  {% elif row[7]=="today" %}
+  class="today"
+  {% elif row[7]=="3hr" %}
+  class="hr3"
+  {% else %}
+  class="fresh"
+  {% endif %}
+  >
     <td>{{ row[0] }}</td>
     <td>{{ row[1] }}</td>
     <td>{{ row[2] }}</td>

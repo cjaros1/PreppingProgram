@@ -199,9 +199,17 @@ def inventory():
         else:
             location="Other"
 
-        isExpired=False
+        hr3=datetime.now()+timedelta(hours=3)
+
+        isExpired="fresh"
         if invs[i].invExpDate<datetime.now():
-            isExpired=True
+            isExpired="expired"
+        elif invs[i].invExpDate<hr3:
+            isExpired="3hr"
+        elif invs[i].invExpDate.date()==datetime.now().date():
+            isExpired="today"
+
+
 
         emp=Employee.query.filter_by(empID=invs[i].invEmpID).first()
         row.append(str(invs[i].invID))
@@ -272,7 +280,7 @@ def inventoryadded():
 
 @app.route("/delinventory",methods=['POST','GET'])
 def delinventory():
-    invs=(Inventory.query.all())
+    invs=(Inventory.query.order_by(Inventory.invExpDate).all())
     table=[]
 
     location=""
@@ -292,6 +300,18 @@ def delinventory():
         else:
             location="Other"
 
+        hr3=datetime.now()+timedelta(hours=3)
+
+        isExpired="fresh"
+        if invs[i].invExpDate<datetime.now():
+            isExpired="expired"
+        elif invs[i].invExpDate<hr3:
+            isExpired="3hr"
+        elif invs[i].invExpDate.date()==datetime.now().date():
+            isExpired="today"
+
+
+
         emp=Employee.query.filter_by(empID=invs[i].invEmpID).first()
         row.append(str(invs[i].invID))
         row.append(str(invs[i].invName))
@@ -300,6 +320,7 @@ def delinventory():
         row.append(str(invs[i].invDateAdded))
         row.append(str(invs[i].invExpDate))
         row.append(str(emp.empLName)+", "+str(emp.empFName)[0])
+        row.append(isExpired)
         table.append(row)
 
 
@@ -409,6 +430,17 @@ def getemployee():
     print(str(session))
     print("Successful Clock In with employee_id: {} and employee_password: {} at time: {} Manager Permissions are: {}".format(employee_id,employee_password,datetime.now().strftime('%H:%M:%S'),managerPerms))
     return render_template('menu.html', title='Menu', error='', welcome_msg=welcome_msg, clockin_msg=clockin_msg, managerPerms=managerPerms, clocked_in=clocked_in)
+
+
+@app.route("/hireemployee", methods=['POST'])
+def hireemployee():
+
+    return render_template('hireemployee.html', title="Hire Employee")
+
+@app.route("/fireemployee", methods=['POST'])
+def fireemployee():
+
+    return render_template('fireemployee.html', title="Fire Employee")
 
 if __name__ == '__main__':
     app.secret_key = os.urandom(24)

@@ -12,13 +12,18 @@
     <th >Date Added</th>
     <th >Expiration Date</th>
     <th >Employee</th>
-    <th >Select</th>
   </tr>
 
 {% for row in table %}
   <tr
-    {% if row[7] %}
+    {% if row[7]=="expired" %}
     class="expired"
+    {% elif row[7]=="today" %}
+    class="today"
+    {% elif row[7]=="3hr" %}
+    class="hr3"
+    {% else %}
+    class="fresh"
     {% endif %}
     >
     <td >{{ row[0] }}</td>
@@ -28,7 +33,6 @@
     <td >{{ row[4] }}</td>
     <td >{{ row[5] }}</td>
     <td >{{ row[6] }}</td>
-    <td ><input type="checkbox" name="invSelect{{ row[0] }}"></td>
   </tr>
 {% endfor %}
 </table>
