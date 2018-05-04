@@ -61,24 +61,7 @@ hr {
     margin: 20px auto;
 }
 
-.post + .post {
-    margin-top: 20px;
-}
 
-.post-title {
-    font-weight: bold;
-    font-size: 20px;
-}
-
-.post-body {
-    margin: 0;
-    font-size: 17px;
-}
-
-.post-author {
-    font-style: italic;
-    font-size: 12px;
-}
 
 nav ul {
     padding: 0;
@@ -89,8 +72,4 @@ nav ul li {
     list-style: none;
     display: inline-block;
     margin-right: 15px;
-}
-
-nav #user-account {
-    float: right;
 }

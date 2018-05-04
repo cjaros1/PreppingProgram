@@ -157,14 +157,11 @@ def clockout():
     clockin_time=session['clockin_time']
     employee_ID=session['employee_ID']
     clockout_time=datetime.now()
-    shiftHrs=(clockout_time.hour*1.00+clockout_time.minute/60.00+clockout_time.second/3600.00)-(clockin_time.hour*1.00+clockin_time.minute/60.00+clockin_time.second/3600.00)
+    shiftHrs=(clockout_time.hour+clockout_time.minute/60+clockout_time.second/3600)-(clockin_time.hour+clockin_time.minute/60+clockin_time.second/3600)
+    
     hours=Hours(hoursID, employee_ID, clockin_time, clockout_time, shiftHrs)
-
-
-
-
     clockout_msg="{}: {} {} Clock In Time: {} Clock Out Time: {}".format(session['employee_pos'], session['employee_First'], session['employee_Last'], clockin_time.strftime('%H:%M:%S'), clockout_time.strftime('%H:%M:%S'))
-    hours_msg="Hours: {0:2f}".format(shiftHrs)
+    hours_msg="Hours: {:.2f}".format(shiftHrs)
     clocked_in=False
     managerPerms=False
     session['managerPerms']=managerPerms

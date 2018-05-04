@@ -2,7 +2,7 @@
 {% block content %}
 
 
-
+<form action="/inventorydeleted" method="POST">
 <table>
   <tr>
     <th>Inventory Number</th>
@@ -38,6 +38,7 @@
   </tr>
 {% endfor %}
 </table>
-
+<input type="submit" value="Delete Selected">
+</form>
 
 {% endblock %}
