@@ -62,8 +62,9 @@ class Preps(db.Model):
     prepIngr3=db.Column(db.Integer, db.ForeignKey(Ingredients.ingID))
     prepIngr4=db.Column(db.Integer, db.ForeignKey(Ingredients.ingID))
     prepIngr5=db.Column(db.Integer, db.ForeignKey(Ingredients.ingID))
+    prepCount=db.Column(db.Integer)
 
-    def __init__(self, prepID, prepName, prepShelfLife, prepIngr1, prepIngr2, prepIngr3, prepIngr4, prepIngr5):
+    def __init__(self, prepID, prepName, prepShelfLife, prepIngr1, prepIngr2, prepIngr3, prepIngr4, prepIngr5, prepCount):
         self.prepID=prepID
         self.prepName=prepName
         self.prepShelfLife=prepShelfLife
@@ -72,6 +73,7 @@ class Preps(db.Model):
         self.prepIngr3=prepIngr3
         self.prepIngr4=prepIngr4
         self.prepIngr5=prepIngr5
+        self.prepCount=prepCount
 
 
 class Inventory(db.Model):
@@ -153,12 +155,16 @@ def menu():
 
 @app.route("/clockout", methods=['POST', 'GET'])
 def clockout():
+
     hoursID=Hours.query.count()+1
+    while Hours.query.filter_by(hrLogID=hoursID).first() != None:
+        hoursID+=1
+
     clockin_time=session['clockin_time']
     employee_ID=session['employee_ID']
     clockout_time=datetime.now()
     shiftHrs=(clockout_time.hour+clockout_time.minute/60+clockout_time.second/3600)-(clockin_time.hour+clockin_time.minute/60+clockin_time.second/3600)
-    
+
     hours=Hours(hoursID, employee_ID, clockin_time, clockout_time, shiftHrs)
     clockout_msg="{}: {} {} Clock In Time: {} Clock Out Time: {}".format(session['employee_pos'], session['employee_First'], session['employee_Last'], clockin_time.strftime('%H:%M:%S'), clockout_time.strftime('%H:%M:%S'))
     hours_msg="Hours: {:.2f}".format(shiftHrs)
@@ -227,35 +233,23 @@ def inventory():
 @app.route("/addinventory",methods=['POST','GET'])
 def addinventory():
     ings=(Ingredients.query.all())
+    preps=(Preps.query.all())
     ingNames=[]
+    prepNames=[]
     for i in range(len(ings)-1):
         ingNames.append(ings[i].ingName)
     session['ingNames']=ingNames
-    return render_template('addinventory.html', title='Add To Inventory', error='', ingNames=session['ingNames'], clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
+    for i in range(len(preps)-1):
+        prepNames.append(preps[i].prepName)
+    session['prepNames']=prepNames
+
+    return render_template('addinventory.html', title='Add To Inventory', error='', ingNames=session['ingNames'], prepNames=session['prepNames'], clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
 
 
 @app.route("/inventoryadded", methods=['POST'])
 def inventoryadded():
 
     quantity=int(request.form['quantity'])
-    ingNum=request.form.get('ingNum')
-    ingLoc=request.form.get('location')
-    if ingLoc=="FRZ":
-        loc="freezer"
-    elif ingLoc=="WIC":
-        loc="walk in cooler"
-    elif ingLoc=="SAB":
-        loc="salad bar"
-    elif ingLoc=="SWB":
-        loc="sandwich bar"
-    else:
-        loc="other location"
-
-
-    ingredient=Ingredients.query.filter_by(ingID=ingNum).first()
-    dateAdded=datetime.now()
-    expiration= dateAdded + timedelta(hours=ingredient.ingShelfLife)
-    employee_ID=session['employee_ID']
 
     if quantity < 0 :
         error="Cannot add negative quantity to inventory, please select a positive number."
@@ -264,15 +258,70 @@ def inventoryadded():
         error="You have added 0 {} to the inventory.".format(ingredient)
         return render_template('addinventory.html', title='Add To Inventory', error='', ingNames=session['ingNames'],  clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
 
+
+    idNum=int(request.form.get('num'))
+    invLoc=request.form.get('location')
+    dateAdded=datetime.now()
+    employee_ID=session['employee_ID']
+
+
+    if idNum>=30:
+        idNum-=29
+        prep=Preps.query.filter_by(prepID=idNum).first()
+        expiration= dateAdded + timedelta(hours=prep.prepShelfLife)
+        invName=prep.prepName
+        invPrepID=prep.prepID
+        invIngID=30
+    else:
+        ing=Ingredients.query.filter_by(ingID=idNum).first()
+        expiration=dateAdded+timedelta(hours=ing.ingShelfLife)
+        invName=ing.ingName
+        invPrepID=19
+        invIngID=ing.ingID
+
+    if invLoc=="FRZ":
+        loc="freezer"
+    elif invLoc=="WIC":
+        loc="walk in cooler"
+    elif invLoc=="SAB":
+        loc="salad bar"
+    elif invLoc=="SWB":
+        loc="sandwich bar"
+    else:
+        loc="other location"
+
+
+
+
+
+
     invID=Inventory.query.count()+1
-    print(invID)
-    inventory=Inventory(invID, ingredient.ingName, ingLoc, dateAdded, expiration, employee_ID, 19, ingredient.ingID, quantity)
+    while Inventory.query.filter_by(invID=invID).first() != None:
+        invID+=1
+
+    inventory=Inventory(invID,invName,invLoc,dateAdded,expiration,employee_ID,invPrepID,invIngID,quantity)
     db.session.add(inventory)
     db.session.commit()
 
-    add_msg="You have added {} {} to the inventory in the {}".format(quantity, ingredient.ingName, loc)
+    add_msg="You have added {} {} to the inventory in the {}".format(quantity, invName, loc)
+    
+    return render_template('addinventory.html', title='Add To Inventory', error='', ingNames=session['ingNames'], prepNames=session['prepNames'], add_msg=add_msg, clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
 
-    return render_template('addinventory.html', title='Add To Inventory', error='', ingNames=session['ingNames'], add_msg=add_msg, clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
+
+@app.route("/inventorydeleted", methods=['POST'])
+def inventorydeleted():
+
+
+
+
+    inventory=Inventory(invID, ingredient.ingName, ingLoc, dateAdded, expiration, employee_ID, prep.prepID, ingredient.ingID, quantity)
+    db.session.delete(inventory)
+    db.session.commit()
+
+
+
+    return render_template('inventorydeleted.html', title='Deleted From Inventory', error='',  clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
+
 
 
 @app.route("/delinventory",methods=['POST','GET'])

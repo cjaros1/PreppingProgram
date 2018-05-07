@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<table>
+  <tr>
+    <th>Prep Number</th>
+    <th>Prep Name</th>
+    <th>Prep Shelf Life</th>
+  </tr>
+
+{% for row in table %}
+  <tr>
+    <td>{{ row[0] }}</td>
+    <td>{{ row[1] }}</td>
+    <td>{{ row[2] }}</td>
+    <td>{{ row[3] }} Hours</td>
+  </tr>
+{% endfor %}
+</table>
+
+{% endblock %}

@@ -3,16 +3,21 @@
 
 {{ add_msg }}
 <form action='/inventoryadded' method='POST'>
-<select name='ingNum'>
+<select name='num'>
 {% for i in range(ingNames|length) %}
   <option value='{{ i+1 }}'>{{ i+1 }}. {{ ingNames[i] }}</option>
+{% endfor %}
+{% for i in range(prepNames|length) %}
+  <option value="{{ i+30 }}">{{ i+30 }}. {{ prepNames[i] }} (prep)</option>
 {% endfor %}
 </select>
 <select name='location'>
   <option value='FRZ'>Freezer</option>
   <option value='WIC'>Walk In Cooler</option>
+  <option value='SAB'>Salad Bar</option>
+  <option value='SWB'>Sandwich Bar</option>
 </select>
-<input type='number' name='quantity' min=0 value=0></input>
+<input type='number' name='quantity' min=1 value=1></input>
 <span class='error'>{{ error }}</error>
 <input type='submit'>
 </form>
