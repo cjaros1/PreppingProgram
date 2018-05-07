@@ -3,17 +3,18 @@
 
 <table>
   <tr>
-    <th>Prep Number</th>
+    <th>Quantity On Hand</th>
     <th>Prep Name</th>
-    <th>Prep Shelf Life</th>
+    <th>Quantity Needed</th>
+    <th>Quantity To Prep</th>
   </tr>
 
 {% for row in table %}
   <tr>
     <td>{{ row[0] }}</td>
     <td>{{ row[1] }}</td>
-    <td>{{ row[2] }}</td>
-    <td>{{ row[3] }} Hours</td>
+    <td align="right">{{ row[2] }}</td>
+    <td align="right">{{ row[3] }}</td>
   </tr>
 {% endfor %}
 </table>

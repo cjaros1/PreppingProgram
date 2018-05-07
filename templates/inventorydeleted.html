@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block content %}
+
+
+<p>{{ deletedMsg }}</p>
+
+<ul>
+  <li><a href="/ingredients">Ingredients List</a></li>
+  <li><a href="/preps">Preps List</a></li>
+  <li><a href="/inventory">Inventory List</a></li>
+  {% if prepStart %}
+  <li><a href="/prepcount">Prep Count</a></li>
+  {% else %}
+  <li><a href="/prepstart">Start Prep</a></li>
+  {% endif %}
+</ul>
+
+
+{% endblock %}

@@ -2,7 +2,7 @@
 from flask import Flask, request, redirect, render_template, session
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
-import os
+import os, math
 
 app = Flask(__name__)
 app.config['DEBUG'] = True
@@ -129,16 +129,17 @@ def index():
 def clockin():
 
     clocked_in=False
+    prepStart=False
+    session['prepStart']=prepStart
     session['clocked_in']=clocked_in
-    print("endget")
     return render_template('clockin.html',title='Clock In', error="", clocked_in=session['clocked_in'])
 
 @app.route("/clockin",methods=['POST'])
 def clockin_post():
     clocked_in=False
+    prepStart=False
+    session['prepStart']=prepStart
     session['clocked_in']=clocked_in
-    print ("endpost")
-    print(request.form)
     employee_id=request.form['empID']
     employee_password=request.form['password']
 
@@ -304,7 +305,7 @@ def inventoryadded():
     db.session.commit()
 
     add_msg="You have added {} {} to the inventory in the {}".format(quantity, invName, loc)
-    
+
     return render_template('addinventory.html', title='Add To Inventory', error='', ingNames=session['ingNames'], prepNames=session['prepNames'], add_msg=add_msg, clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
 
 
@@ -312,15 +313,22 @@ def inventoryadded():
 def inventorydeleted():
 
 
+    deletedMsg="You have deleted "
+    invSelect=request.form.getlist("invSelect")
 
+    if invSelect!= []:
+        for i in invSelect:
+            invID=i
+            inventory=Inventory.query.filter_by(invID=i).first()
+            deletedMsg+="{} {}".format(inventory.invQOH, inventory.invName)
+            db.session.delete(inventory)
+        db.session.commit()
+    else:
+        deletedMsg="Nothing has been deleted "
 
-    inventory=Inventory(invID, ingredient.ingName, ingLoc, dateAdded, expiration, employee_ID, prep.prepID, ingredient.ingID, quantity)
-    db.session.delete(inventory)
-    db.session.commit()
+    deletedMsg+=" from the inventory."
 
-
-
-    return render_template('inventorydeleted.html', title='Deleted From Inventory', error='',  clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
+    return render_template('inventorydeleted.html', title='Deleted From Inventory', deletedMsg=deletedMsg, prepStart=session['prepStart'], error='',  clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
 
 
 
@@ -368,9 +376,9 @@ def delinventory():
         row.append(str(emp.empLName)+", "+str(emp.empFName)[0])
         row.append(isExpired)
         table.append(row)
+        prepStart=session['prepStart']
 
-
-    return render_template('delinventory.html', title='Delete From Inventory', error='', table=table, clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
+    return render_template('delinventory.html', title='Delete From Inventory', prepStart=session['prepStart'], error='', table=table, clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
 
 
 @app.route("/ingredients",methods=['POST','GET'])
@@ -416,24 +424,73 @@ def preps():
 
     return render_template("preps.html", title="Preps List", table=table, clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
 
+@app.route("/prepstart",methods=['POST','GET'])
+def prepstart():
+    invs=(Inventory.query.order_by(Inventory.invExpDate).all())
+    table=[]
+
+    location=""
+
+
+    for i in range(len(invs)):
+        row=[]
+
+        if invs[i].invLocation=="WIC":
+            location="Walk In Cooler"
+        elif invs[i].invLocation=="FRZ":
+            location="Freezer"
+        elif invs[i].invLocation=="SWB":
+            location="Sandwich Bar"
+        elif invs[i].invLocation=="SAB":
+            location="Salad Bar"
+        else:
+            location="Other"
+
+        hr3=datetime.now()+timedelta(hours=3)
+
+        isExpired="fresh"
+        if invs[i].invExpDate<datetime.now():
+            isExpired="expired"
+        elif invs[i].invExpDate<hr3:
+            isExpired="3hr"
+        elif invs[i].invExpDate.date()==datetime.now().date():
+            isExpired="today"
+
+
+
+        emp=Employee.query.filter_by(empID=invs[i].invEmpID).first()
+        row.append(str(invs[i].invID))
+        row.append(str(invs[i].invName))
+        row.append(str(invs[i].invQOH))
+        row.append(location)
+        row.append(str(invs[i].invDateAdded))
+        row.append(str(invs[i].invExpDate))
+        row.append(str(emp.empLName)+", "+str(emp.empFName)[0])
+        row.append(isExpired)
+        table.append(row)
+        prepStart=True
+        session['prepStart']=prepStart
+
+    return render_template('delinventory.html', title='Delete From Inventory', prepStart=session['prepStart'], error='', table=table, clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
+
+
+
 @app.route("/getemployee", methods=['POST'])
 def getemployee():
 
-    #print(managerPerms)
+
     employee_id=request.form['empID']
     employee_password=request.form['password']
     employee=Employee.query.filter_by(empID=employee_id).first()
     employee_pos=""
     managerPerms=False
 
-    print(managerPerms)
+
     if employee_id=="" or employee==None:
         session['clocked_in']=False
         session['managerPerms']=False
         return render_template('clockin.html',title='Clock In', employee_error="Employee {} Not Found: Please make sure your employee ID you've entered is correct".format(employee_id), clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
     elif employee_password=="" or int(employee_password) != employee.empPassword:
-        print("form password: "+ employee_password)
-        print("db password: "+str(employee.empPassword))
         session['clocked_in']=False
         session['managerPerms']=False
         return render_template('clockin.html',title='Clock In', password_error="Password incorrect, please enter the valid password", clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
@@ -462,8 +519,6 @@ def getemployee():
 
 
 
-    #employee.empFName="William"
-    #db.session.commit()
 
 
     clockin_time=datetime.now()
@@ -473,10 +528,36 @@ def getemployee():
     clocked_in=True
     session['clocked_in']=clocked_in
 
-    print(str(session))
-    print("Successful Clock In with employee_id: {} and employee_password: {} at time: {} Manager Permissions are: {}".format(employee_id,employee_password,datetime.now().strftime('%H:%M:%S'),managerPerms))
+
+
     return render_template('menu.html', title='Menu', error='', welcome_msg=welcome_msg, clockin_msg=clockin_msg, managerPerms=managerPerms, clocked_in=clocked_in)
 
+
+@app.route("/prepcount",methods=['POST','GET'])
+def prepcount():
+    prepsList=Inventory.query.filter_by(invIngID=30).all()
+
+    table=[]
+    for i in range(len(prepsList)):
+
+        prep=Preps.query.filter_by(prepID=prepsList[i].invPrepID).first()
+        print(str(prepsList[i]))
+        if prepsList[i].invName in table:
+            index=table.index(prepsList[i].invName)
+            table[index][0]+=prepsList[i].invQOH
+            table[index][3]-=prepsList[i].invQOH
+
+        else:
+            row=[]
+            row.append(prepsList[i].invQOH)
+            row.append(prepsList[i].invName)
+            row.append(prep.prepCount)
+            row.append(int(prep.prepCount-math.floor(prepsList[i].invQOH)))
+            table.append(row)
+
+
+
+    return render_template("prepcount.html", title="Prep Count", table=table )
 
 @app.route("/hireemployee", methods=['POST'])
 def hireemployee():

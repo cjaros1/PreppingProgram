@@ -34,7 +34,11 @@
     <td>{{ row[4] }}</td>
     <td>{{ row[5] }}</td>
     <td>{{ row[6] }}</td>
-    <td><input type="checkbox" name="invSelect{{ row[0] }}"></td>
+    <td><input type="checkbox" name="invSelect" value="{{ row[0] }}"
+      {% if row[7]=="expired" %}
+      checked
+      {% endif %}
+      ></td>
   </tr>
 {% endfor %}
 </table>
