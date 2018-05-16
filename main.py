@@ -2,7 +2,7 @@
 from flask import Flask, request, redirect, render_template, session
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
-import os, math
+import os, math, time 
 
 app = Flask(__name__)
 app.config['DEBUG'] = True
@@ -10,10 +10,7 @@ app.config['SQLALCHEMY_DATABASE_URI']='mysql+pymysql://prep-db:root@localhost:88
 app.config['SQLALCHEMY_ECHO'] = True
 db = SQLAlchemy(app)
 
-global clocked_in
-global employee
-global clockin_time
-global hours
+
 
 class Employee(db.Model):
 
@@ -63,8 +60,9 @@ class Preps(db.Model):
     prepIngr4=db.Column(db.Integer, db.ForeignKey(Ingredients.ingID))
     prepIngr5=db.Column(db.Integer, db.ForeignKey(Ingredients.ingID))
     prepCount=db.Column(db.Integer)
+    prepIngr1Quant=db.Column(db.Float)
 
-    def __init__(self, prepID, prepName, prepShelfLife, prepIngr1, prepIngr2, prepIngr3, prepIngr4, prepIngr5, prepCount):
+    def __init__(self, prepID, prepName, prepShelfLife, prepIngr1, prepIngr2, prepIngr3, prepIngr4, prepIngr5, prepCount, prepIngr1Quant, prepIngr2Quant, prepIngr3Quant, prepIngr4Quant, prepIngr5Quant):
         self.prepID=prepID
         self.prepName=prepName
         self.prepShelfLife=prepShelfLife
@@ -74,7 +72,11 @@ class Preps(db.Model):
         self.prepIngr4=prepIngr4
         self.prepIngr5=prepIngr5
         self.prepCount=prepCount
-
+        self.prepIngr1Quant=prepIngr1Quant
+        self.prepIngr2Quant=prepIngr2Quant
+        self.prepIngr3Quant=prepIngr3Quant
+        self.prepIngr4Quant=prepIngr4Quant
+        self.prepIngr5Quant=prepIngr5Quant
 
 class Inventory(db.Model):
 
@@ -537,27 +539,34 @@ def getemployee():
 def prepcount():
     prepsList=Inventory.query.filter_by(invIngID=30).all()
 
-    table=[]
+    table={}
+
+
+
+
+
     for i in range(len(prepsList)):
 
         prep=Preps.query.filter_by(prepID=prepsList[i].invPrepID).first()
-        print(str(prepsList[i]))
+        name=prep.prepName.replace(" ","")
         if prepsList[i].invName in table:
-            index=table.index(prepsList[i].invName)
-            table[index][0]+=prepsList[i].invQOH
-            table[index][3]-=prepsList[i].invQOH
-
+            table[prepsList[i].invName][0]+=prepsList[i].invQOH
+            table[prepsList[i].invName][3]=table[prepsList[i].invName][2]-math.floor(table[prepsList[i].invName][0])
         else:
-            row=[]
-            row.append(prepsList[i].invQOH)
-            row.append(prepsList[i].invName)
-            row.append(prep.prepCount)
-            row.append(int(prep.prepCount-math.floor(prepsList[i].invQOH)))
-            table.append(row)
+            table[prepsList[i].invName]=[prepsList[i].invQOH, prepsList[i].invName, prep.prepCount, prep.prepCount-math.floor(prepsList[i].invQOH)]
 
+        session['table']=table
 
+    return render_template("prepcount.html", title="Prep Count", table=session['table'], clocked_in=session['clocked_in'], managerPerms=session['managerPerms'] )
 
-    return render_template("prepcount.html", title="Prep Count", table=table )
+@app.route("/prepitem",methods=['POST'])
+def prepitem():
+    table=session['table']
+    prepItem=request.form['prepping']
+    print(prepItem)
+    time.sleep(60)
+    return render_template('prepitem.html', title='Prep Item', clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
+
 
 @app.route("/hireemployee", methods=['POST'])
 def hireemployee():

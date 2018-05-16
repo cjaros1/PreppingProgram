@@ -1,22 +1,32 @@
 {% extends 'base.html' %}
 {% block content %}
 
+
+<form method="POST" action="/prepitem">
 <table>
   <tr>
     <th>Quantity On Hand</th>
     <th>Prep Name</th>
     <th>Quantity Needed</th>
     <th>Quantity To Prep</th>
+    <th></th>
   </tr>
 
-{% for row in table %}
+{% for k in table %}
+  {% if table[k][3] > 0 %}
   <tr>
-    <td>{{ row[0] }}</td>
-    <td>{{ row[1] }}</td>
-    <td align="right">{{ row[2] }}</td>
-    <td align="right">{{ row[3] }}</td>
+
+    <td>{{ table[k][0] }}</td>
+    <td>{{ table[k][1] }}</td>
+    <td align="right">{{ table[k][2] }}</td>
+    <td align="right">{{ table[k][3] }}</td>
+    <td><input type='radio' name='prepping' value='{{ table[k][1] }}'></td>
   </tr>
+  {% endif %}
 {% endfor %}
+
 </table>
+<input type="submit" value="Prep Selected Item">
+</form>
 
 {% endblock %}
