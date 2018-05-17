@@ -2,7 +2,7 @@
 from flask import Flask, request, redirect, render_template, session
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
-import os, math, time 
+import os, math, time
 
 app = Flask(__name__)
 app.config['DEBUG'] = True
@@ -61,6 +61,10 @@ class Preps(db.Model):
     prepIngr5=db.Column(db.Integer, db.ForeignKey(Ingredients.ingID))
     prepCount=db.Column(db.Integer)
     prepIngr1Quant=db.Column(db.Float)
+    prepIngr2Quant=db.Column(db.Float)
+    prepIngr3Quant=db.Column(db.Float)
+    prepIngr4Quant=db.Column(db.Float)
+    prepIngr5Quant=db.Column(db.Float)
 
     def __init__(self, prepID, prepName, prepShelfLife, prepIngr1, prepIngr2, prepIngr3, prepIngr4, prepIngr5, prepCount, prepIngr1Quant, prepIngr2Quant, prepIngr3Quant, prepIngr4Quant, prepIngr5Quant):
         self.prepID=prepID
@@ -470,8 +474,8 @@ def prepstart():
         row.append(str(emp.empLName)+", "+str(emp.empFName)[0])
         row.append(isExpired)
         table.append(row)
-        prepStart=True
-        session['prepStart']=prepStart
+    prepStart=True
+    session['prepStart']=prepStart
 
     return render_template('delinventory.html', title='Delete From Inventory', prepStart=session['prepStart'], error='', table=table, clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
 
@@ -537,25 +541,30 @@ def getemployee():
 
 @app.route("/prepcount",methods=['POST','GET'])
 def prepcount():
-    prepsList=Inventory.query.filter_by(invIngID=30).all()
+    prepsList=Preps.query.all()
+    invPrepsList=Inventory.query.filter_by(invIngID=30).all()
 
     table={}
+    print("preps list: "+str(invPrepsList))
 
+    preps=Preps.query.all()
 
+    for p in preps:
+        if p.prepName != "NULL":
+            name=p.prepName.replace(" ","")
+            table[name]=[0,p.prepName,p.prepCount,p.prepCount]
+    for i in range(len(prepsList)-1):
 
-
-
-    for i in range(len(prepsList)):
-
-        prep=Preps.query.filter_by(prepID=prepsList[i].invPrepID).first()
-        name=prep.prepName.replace(" ","")
-        if prepsList[i].invName in table:
-            table[prepsList[i].invName][0]+=prepsList[i].invQOH
-            table[prepsList[i].invName][3]=table[prepsList[i].invName][2]-math.floor(table[prepsList[i].invName][0])
+        prep=Inventory.query.filter_by(invPrepID=prepsList[i].prepID).first()
+        name=prepsList[i].prepName.replace(" ","")
+        if prep != None:
+            table[name][0]+=prep.invQOH
+            table[name][3]=table[name][2]-math.floor(table[name][0])
         else:
-            table[prepsList[i].invName]=[prepsList[i].invQOH, prepsList[i].invName, prep.prepCount, prep.prepCount-math.floor(prepsList[i].invQOH)]
+            table[name]=[0, prepsList[i].prepName, prepsList[i].prepCount, prepsList[i].prepCount]
 
-        session['table']=table
+
+    session['table']=table
 
     return render_template("prepcount.html", title="Prep Count", table=session['table'], clocked_in=session['clocked_in'], managerPerms=session['managerPerms'] )
 
@@ -563,9 +572,251 @@ def prepcount():
 def prepitem():
     table=session['table']
     prepItem=request.form['prepping']
-    print(prepItem)
-    time.sleep(60)
-    return render_template('prepitem.html', title='Prep Item', clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
+    name=prepItem.replace(" ","")
+
+    dateAdded=datetime.now()
+    employee_ID=session['employee_ID']
+
+    prep=Preps.query.filter_by(prepName=prepItem).first()
+    print(prep.prepIngr2Quant)
+    expiration= dateAdded + timedelta(hours=prep.prepShelfLife)
+    invName=prep.prepName
+    invPrepID=prep.prepID
+    invIngID=30
+
+    invID=Inventory.query.count()+1
+    while Inventory.query.filter_by(invID=invID).first() != None:
+        invID+=1
+
+    quantity=table[name][3]
+    enoughIngs=[False]
+    error=[]
+    success=""
+
+    invIng1=Inventory.query.filter_by(invIngID=prep.prepIngr1).order_by(Inventory.invExpDate.asc()).all()
+    if invIng1:
+        if invIng1[0].invQOH>(quantity*prep.prepIngr1Quant):
+            invIng1[0].invQOH-=quantity*prep.prepIngr1Quant
+            enoughIngs[0]=True
+            success="You have successfully prepped {} {} stored in the {} using {} {}".format(quantity,prepItem,"Walk In Cooler",quantity*prep.prepIngr1Quant,invIng1[0].invName)
+        elif invIng1[0].invQOH==quantity*prep.prepIngr1Quant:
+            db.session.delete(invIng1[0])
+            success="You have successfully prepped {} {} stored in the {} using {} {}".format(quantity,prepItem,"Walk In Cooler",quantity*prep.prepIngr1Quant,invIng1[0].invName)
+            enoughIngs[0]=True
+        else:
+            ingCount=0
+            num=0
+            for ing in invIng1:
+                ingCount+=ing.invQOH
+                num+=1
+                print(ing.invExpDate)
+                if ingCount>=quantity*prep.prepIngr1Quant:
+                    break
+            if ingCount>=quantity*prep.prepIngr1Quant:
+                for n in range(num - 1):
+                    if n == num-1:
+                        invIng1[n].invQOH-=ingCount
+                        ingCount-=invIng1[n].invQOH
+                        db.session.commit()
+
+                    elif n < num-1:
+                        db.session.delete(invIng1[n])
+                        ingCount-=invIng1[n].invQOH
+                        db.session.commit()
+                enoughIngs[0]=True
+                success="You have successfully prepped {} {} stored in the {} using {} {}".format(quantity,prepItem,"Walk In Cooler",quantity*prep.prepIngr1Quant,invIng1[0].invName)
+            else:
+                enoughIngs[0]=False
+                error.append("Warning: not enough of {} in inventory to prep {} {}: Please contact your manager about ingredients.".format(Ingredients.query.filter_by(ingID=prep.prepIngr1).first().ingName,quantity,prepItem))
+
+
+    else:
+        enoughIngs[0]=False
+        error.append("Warning: not enough of {} in inventory to prep {} {}: Please contact your manager about ingredients.".format(Ingredients.query.filter_by(ingID=prep.prepIngr1).first().ingName,quantity,prepItem))
+
+    if prep.prepIngr2 != None:
+        invIng2=Inventory.query.filter_by(invIngID=prep.prepIngr2).order_by(Inventory.invExpDate.asc()).all()
+        if invIng2:
+            print("...................."+str(prep.prepIngr2Quant))
+            if invIng2[0].invQOH>(quantity*prep.prepIngr2Quant):
+                invIng2[0].invQOH-=quantity*prep.prepIngr2Quant
+                db.session.commit()
+                enoughIngs.append(True)
+                success+=", {} {}".format(quantity*prep.prepIngr2Quant,invIng2[0].invName)
+            elif invIng2[0].invQOH==quantity*prep.prepIngr2Quant:
+                db.session.delete(invIng2[0])
+                db.session.commit()
+                enoughIngs.append(True)
+                success+=", {} {}".format(quantity*prep.prepIngr2Quant,invIng2[0].invName)
+            else:
+                ingCount=0
+                num=0
+                for ing in invIng2:
+                    ingCount+=ing.invQOH
+                    num+=1
+                    print(ing.invExpDate)
+                    if ingCount>=quantity*prep.prepIngr2Quant:
+                        break
+                if ingCount>=quantity*prep.prepIngr2Quant:
+                    for n in range(num - 1):
+                        if n == num-1:
+                            invIng2[n].invQOH-=ingCount
+                            ingCount-=invIng2[n].invQOH
+                            db.session.commit()
+
+                        elif n < num-1:
+                            db.session.delete(invIng2[n])
+                            ingCount-=invIng2[n].invQOH
+                            db.session.commit()
+                    enoughIngs.append(True)
+                    success+=", {} {}".format(quantity*prep.prepIngr2Quant,invIng2[0].invName)
+                else:
+                    enoughIngs[1]=False
+                    error.append("Warning: not enough of {} in inventory to prep {} {}: Please contact your manager about ingredients.".format(Ingredients.query.filter_by(ingID=prep.prepIngr2).first().ingName,quantity,prepItem))
+
+        else:
+            enoughIngs.append(False)
+            error.append("Warning: not enough of {} in inventory to prep {} {}: Please contact your manager about ingredients.".format(Ingredients.query.filter_by(ingID=prep.prepIngr2).first().ingName,quantity,prepItem))
+
+    if prep.prepIngr3 != None:
+        invIng3=Inventory.query.filter_by(invIngID=prep.prepIngr3).order_by(Inventory.invExpDate.asc()).all()
+        if invIng3:
+            if invIng3[0].invQOH>(quantity*prep.prepIngr3Quant):
+                invIng3[0].invQOH-=quantity*prep.prepIngr3Quant
+                db.session.commit()
+                enoughIngs.append(True)
+                success+=", {} {}".format(quantity*prep.prepIngr3Quant,invIng3[0].invName)
+            elif invIng3[0].invQOH==quantity*prep.prepIngr3Quant:
+                db.session.delete(invIng3[0])
+                db.session.commit()
+                enoughIngs.append(True)
+                success+=", {} {}".format(quantity*prep.prepIngr3Quant,invIng3[0].invName)
+            else:
+                ingCount=0
+                num=0
+                for ing in invIng3:
+                    ingCount+=ing.invQOH
+                    num+=1
+                    print(ing.invExpDate)
+                    if ingCount>=quantity*prep.prepIngr3Quant:
+                        break
+                if ingCount>=quantity*prep.prepIngr3Quant:
+                    for n in range(num - 1):
+                        if n == num-1:
+                            invIng3[n].invQOH-=ingCount
+                            ingCount-=invIng3[n].invQOH
+                            db.session.commit()
+
+                        elif n < num-1:
+                            db.session.delete(invIng3[n])
+                            ingCount-=invIng3[n].invQOH
+                            db.session.commit()
+                    enoughIngs.append(True)
+                    success+=", {} {}".format(quantity*prep.prepIngr3Quant,invIng3[0].invName)
+                else:
+                    enoughIngs[2]=False
+                    error.append("Warning: not enough of {} in inventory to prep {} {}: Please contact your manager about ingredients.".format(Ingredients.query.filter_by(ingID=prep.prepIngr3).first().ingName,quantity,prepItem))
+
+        else:
+            enoughIngs.append(False)
+            error.append("Warning: not enough of {} in inventory to prep {} {}: Please contact your manager about ingredients.".format(Ingredients.query.filter_by(ingID=prep.prepIngr3).first().ingName,quantity,prepItem))
+
+    if prep.prepIngr4 != None:
+        invIng4=Inventory.query.filter_by(invIngID=prep.prepIngr4).order_by(Inventory.invExpDate.asc()).all()
+        if invIng4:
+            if invIng4[0].invQOH>(quantity*prep.prepIngr4Quant):
+                invIng4[0].invQOH-=quantity*prep.prepIngr4Quant
+                db.session.commit()
+                enoughIngs.append(True)
+                success+=", {} {}".format(quantity*prep.prepIngr4Quant,invIng4[0].invName)
+            elif invIng4[0].invQOH==quantity*prep.prepIngr4Quant:
+                db.session.delete(invIng4[0])
+                db.session.commit()
+                enoughIngs.append(True)
+                success+=", {} {}".format(quantity*prep.prepIngr4Quant,invIng4[0].invName)
+            else:
+                ingCount=0
+                num=0
+                for ing in invIng4:
+                    ingCount+=ing.invQOH
+                    num+=1
+                    print(ing.invExpDate)
+                    if ingCount>=quantity*prep.prepIngr4Quant:
+                        break
+                if ingCount>=quantity*prep.prepIngr4Quant:
+                    for n in range(num - 1):
+                        if n == num-1:
+                            invIng4[n].invQOH-=ingCount
+                            ingCount-=invIng4[n].invQOH
+                            db.session.commit()
+
+                        elif n < num-1:
+                            db.session.delete(invIng4[n])
+                            ingCount-=invIng4[n].invQOH
+                            db.session.commit()
+                    enoughIngs.append(True)
+                    success+=", {} {}".format(quantity*prep.prepIngr4Quant,invIng4[0].invName)
+                else:
+                    enoughIngs[2]=False
+                    error.append("Warning: not enough of {} in inventory to prep {} {}: Please contact your manager about ingredients.".format(Ingredients.query.filter_by(ingID=prep.prepIngr4).first().ingName,quantity,prepItem))
+
+        else:
+            enoughIngs.append(False)
+            error.append("Warning: not enough of {} in inventory to prep {} {}: Please contact your manager about ingredients.".format(Ingredients.query.filter_by(ingID=prep.prepIngr4).first().ingName,quantity,prepItem))
+
+    if prep.prepIngr5 != None:
+        invIng5=Inventory.query.filter_by(invIngID=prep.prepIngr5).order_by(Inventory.invExpDate.asc()).all()
+        if invIng5:
+            if invIng5[0].invQOH>(quantity*prep.prepIngr5Quant):
+                invIng5[0].invQOH-=quantity*prep.prepIngr5Quant
+                db.session.commit()
+                enoughIngs.append(True)
+                success+=", {} {}".format(quantity*prep.prepIngr5Quant,invIng5[0].invName)
+            elif invIng5[0].invQOH==quantity*prep.prepIngr5Quant:
+                db.session.delete(invIng5[0])
+                db.session.commit()
+                enoughIngs.append(True)
+                success+=", {} {}".format(quantity*prep.prepIngr5Quant,invIng5[0].invName)
+            else:
+                ingCount=0
+                num=0
+                for ing in invIng5:
+                    ingCount+=ing.invQOH
+                    num+=1
+                    print(ing.invExpDate)
+                    if ingCount>=quantity*prep.prepIngr5Quant:
+                        break
+                if ingCount>=quantity*prep.prepIngr5Quant:
+                    for n in range(num - 1):
+                        if n == num-1:
+                            invIng5[n].invQOH-=ingCount
+                            ingCount-=invIng5[n].invQOH
+                            db.session.commit()
+
+                        elif n < num-1:
+                            db.session.delete(invIng5[n])
+                            ingCount-=invIng5[n].invQOH
+                            db.session.commit()
+                    enoughIngs.append(True)
+                    success+=", {} {}".format(quantity*prep.prepIngr5Quant,invIng5[0].invName)
+                else:
+                    enoughIngs[2]=False
+                    error.append("Warning: not enough of {} in inventory to prep {} {}: Please contact your manager about ingredients.".format(Ingredients.query.filter_by(ingID=prep.prepIngr5).first().ingName,quantity,prepItem))
+
+        else:
+            enoughIngs.append(False)
+            error.append("Warning: not enough of {} in inventory to prep {} {}: Please contact your manager about ingredients.".format(Ingredients.query.filter_by(ingID=prep.prepIngr5).first().ingName,quantity,prepItem))
+
+    print(all(enoughIngs))
+    if all(enoughIngs):
+        inventory=Inventory(invID,prepItem,"WIC",dateAdded,expiration,employee_ID,invPrepID,invIngID,quantity)
+        db.session.add(inventory)
+
+    if success !="":
+        success+=" from inventory"
+    print(str(db.session))
+    db.session.commit()
+    return render_template('prepitem.html', title='Prep Item', table=table, error=error, success=success, name=name, clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
 
 
 @app.route("/hireemployee", methods=['POST'])

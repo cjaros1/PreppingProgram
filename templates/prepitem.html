@@ -1,6 +1,12 @@
 {% extends 'base.html' %}
 {% block content %}
 
+<p>{{ success }}<p>
+<br>
+{% for msg in error %}
+<p class="error">{{ msg }}</p>
+{% endfor %}
 
+<a href="/prepcount">Prep Next Item</a>
 
 {% endblock %}
