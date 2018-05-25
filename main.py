@@ -545,7 +545,7 @@ def prepcount():
     invPrepsList=Inventory.query.filter_by(invIngID=30).all()
 
     table={}
-    print("preps list: "+str(invPrepsList))
+
 
     preps=Preps.query.all()
 
@@ -578,7 +578,6 @@ def prepitem():
     employee_ID=session['employee_ID']
 
     prep=Preps.query.filter_by(prepName=prepItem).first()
-    print(prep.prepIngr2Quant)
     expiration= dateAdded + timedelta(hours=prep.prepShelfLife)
     invName=prep.prepName
     invPrepID=prep.prepID
@@ -609,7 +608,6 @@ def prepitem():
             for ing in invIng1:
                 ingCount+=ing.invQOH
                 num+=1
-                print(ing.invExpDate)
                 if ingCount>=quantity*prep.prepIngr1Quant:
                     break
             if ingCount>=quantity*prep.prepIngr1Quant:
@@ -637,7 +635,6 @@ def prepitem():
     if prep.prepIngr2 != None:
         invIng2=Inventory.query.filter_by(invIngID=prep.prepIngr2).order_by(Inventory.invExpDate.asc()).all()
         if invIng2:
-            print("...................."+str(prep.prepIngr2Quant))
             if invIng2[0].invQOH>(quantity*prep.prepIngr2Quant):
                 invIng2[0].invQOH-=quantity*prep.prepIngr2Quant
                 db.session.commit()
@@ -654,7 +651,6 @@ def prepitem():
                 for ing in invIng2:
                     ingCount+=ing.invQOH
                     num+=1
-                    print(ing.invExpDate)
                     if ingCount>=quantity*prep.prepIngr2Quant:
                         break
                 if ingCount>=quantity*prep.prepIngr2Quant:
@@ -697,7 +693,6 @@ def prepitem():
                 for ing in invIng3:
                     ingCount+=ing.invQOH
                     num+=1
-                    print(ing.invExpDate)
                     if ingCount>=quantity*prep.prepIngr3Quant:
                         break
                 if ingCount>=quantity*prep.prepIngr3Quant:
@@ -740,7 +735,6 @@ def prepitem():
                 for ing in invIng4:
                     ingCount+=ing.invQOH
                     num+=1
-                    print(ing.invExpDate)
                     if ingCount>=quantity*prep.prepIngr4Quant:
                         break
                 if ingCount>=quantity*prep.prepIngr4Quant:
@@ -783,7 +777,6 @@ def prepitem():
                 for ing in invIng5:
                     ingCount+=ing.invQOH
                     num+=1
-                    print(ing.invExpDate)
                     if ingCount>=quantity*prep.prepIngr5Quant:
                         break
                 if ingCount>=quantity*prep.prepIngr5Quant:
@@ -807,14 +800,14 @@ def prepitem():
             enoughIngs.append(False)
             error.append("Warning: not enough of {} in inventory to prep {} {}: Please contact your manager about ingredients.".format(Ingredients.query.filter_by(ingID=prep.prepIngr5).first().ingName,quantity,prepItem))
 
-    print(all(enoughIngs))
+
     if all(enoughIngs):
         inventory=Inventory(invID,prepItem,"WIC",dateAdded,expiration,employee_ID,invPrepID,invIngID,quantity)
         db.session.add(inventory)
 
     if success !="":
         success+=" from inventory"
-    print(str(db.session))
+
     db.session.commit()
     return render_template('prepitem.html', title='Prep Item', table=table, error=error, success=success, name=name, clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
 
