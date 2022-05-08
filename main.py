@@ -1,12 +1,14 @@
 
 from flask import Flask, request, redirect, render_template, session
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.sql import func
 from datetime import datetime, timedelta
 import os, math, time
 
+basedir=os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
 app.config['DEBUG'] = True
-app.config['SQLALCHEMY_DATABASE_URI']='mysql+pymysql://prep-db:root@localhost:8889/prep-db'
+app.config['SQLALCHEMY_DATABASE_URI']= 'sqlite:///' + os.path.join(basedir,'database.db')
 app.config['SQLALCHEMY_ECHO'] = True
 db = SQLAlchemy(app)
 
@@ -122,6 +124,7 @@ class Hours(db.Model):
         self.hrCOutTime=hrCOutTime
         self.hrShiftHrs=hrShiftHrs
 
+db.create_all()
 
 @app.route("/", methods=['POST', 'GET'])
 def index():
