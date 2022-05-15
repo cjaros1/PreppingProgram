@@ -329,7 +329,7 @@ def inventorydeleted():
         for i in invSelect:
             invID=i
             inventory=Inventory.query.filter_by(invID=i).first()
-            deletedMsg+="{} {}".format(inventory.invQOH, inventory.invName)
+            deletedMsg+=" {} {}".format(inventory.invQOH, inventory.invName)
             db.session.delete(inventory)
         db.session.commit()
     else:
