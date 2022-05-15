@@ -1,6 +1,6 @@
-use database.db
+
 Insert into employees(empID,empFName,empLName,empPassword,empPosition,empDOB,empHireDate)
 Values
-(1,'William','Hartnell',1111,'G',11-23-1963,1-1-2022),
-(2,'Patrick','Troughton',2222,'A',10-29-1966,1-1-2022),
-(3,'Jon','Pertwee',3333,'A',06-21-1969,1-1-2022);
+(1,'William','Hartnell',1111,'G',19080108,19631123),
+(2,'Patrick','Troughton',2222,'M',19200328,19661029),
+(3,'Jon','Pertwee',3333,'M',19190707,19690621);
