@@ -26,7 +26,7 @@ class Employee(db.Model):
     empHireDate = db.Column(db.DateTime())
 
     def __init__(self, empFName, empLName, empPassword, empPosition, empDOB, empHireDate):
-        self.name = name
+       # self.name = name
         self.empFName=empFName
         self.empLName=empLName
         self.empPassword=empPassword
@@ -322,20 +322,20 @@ def inventoryadded():
 def inventorydeleted():
 
 
-    deletedMsg="You have deleted "
+    deletedMsg="You have deleted:\n"
     invSelect=request.form.getlist("invSelect")
 
     if invSelect!= []:
         for i in invSelect:
             invID=i
             inventory=Inventory.query.filter_by(invID=i).first()
-            deletedMsg+=" {} {}".format(inventory.invQOH, inventory.invName)
+            deletedMsg+=" {} {}\n".format(inventory.invQOH, inventory.invName)
             db.session.delete(inventory)
         db.session.commit()
     else:
         deletedMsg="Nothing has been deleted "
 
-    deletedMsg+=" from the inventory."
+    deletedMsg+="\n from the inventory."
 
     return render_template('inventorydeleted.html', title='Deleted From Inventory', deletedMsg=deletedMsg, prepStart=session['prepStart'], error='',  clocked_in=session['clocked_in'], managerPerms=session['managerPerms'])
 
