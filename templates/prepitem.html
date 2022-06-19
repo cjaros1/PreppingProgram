@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 {% block content %}
 
-{% if error == 0 %}
+
     <p>{{ success }}<p>
-{% endif %}
+
 <br>
 {% for msg in error %}
 <p class="error">{{ msg }}</p>
